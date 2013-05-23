@@ -53,7 +53,7 @@
 <script language="javascript" type="text/javascript">
 	// Load Collections
 	$(function () { 
-		$("##labtree").tree({
+		$("##labtree").jstree({
 			plugins : {
 				cookie : { prefix : "cookielabtree_" }
 			},

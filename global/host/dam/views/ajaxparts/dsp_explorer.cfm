@@ -69,6 +69,34 @@
 <script language="javascript" type="text/javascript">
 	// Load Folders
 	$(function () { 
+	$("##treeBox").jstree({
+		"html_data" : {
+			"ajax" : {
+				"url" : "#myself#c.getfolderfortree&col=F",
+				"data" : function (n) { 
+					return { id : n.attr ? n.attr("id") : 0 }; 
+				},
+				"success": function(data){
+					return $.trim(data);
+				}
+			}
+		},
+		types : {
+				"default"  : {
+					deletable : false,
+					renameable : false,
+					draggable : false,
+					icon : { 
+						image : "#dynpath#/global/host/dam/images/folder-blue-mini.png"
+					}
+				}
+			},
+		"cookie" : { prefix : "cookietreebox_", keep_selected : false, keep_opened: true },
+		"plugins" : [  "themes", "html_data", "cookie" ]
+	
+
+	});
+	/*
 		$("##treeBox").tree({
 			plugins : {
 				cookie : { prefix : "cookietreebox_", keep_selected : false, keep_opened: true }
@@ -90,7 +118,9 @@
 				}
 			}
 		});
+		*/
 	});
+	
 </script>
 
 </cfoutput>

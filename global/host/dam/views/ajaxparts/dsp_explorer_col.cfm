@@ -43,7 +43,7 @@
 	<script language="javascript" type="text/javascript">
 		// Load Collections
 		$(function () { 
-			$("##colBox").tree({
+			$("##colBox").jstree({
 				plugins : {
 					cookie : { prefix : "cookiecolbox_" }
 				},

@@ -41,7 +41,7 @@
 	<script language="javascript" type="text/javascript">
 		// Load Folders
 		$(function () { 
-			$("##win_choosefolder").tree({
+			$("##win_choosefolder").jstree({
 				// plugins : {
 				// 	cookie : { prefix : "treemovebox_" }
 				// },

@@ -2959,7 +2959,7 @@
 	<!--- Tree for the Explorer --->
 	<cfif arguments.thestruct.actionismove EQ "F">
 		<cfoutput query="qry">
-		<li id="<cfif iscol EQ "T">col-</cfif>#folder_id#"<cfif subhere EQ "1"> class="closed"</cfif>><a href="##" onclick="loadcontent('rightside','index.cfm?fa=<cfif iscol EQ "T">c.collections<cfelse>c.folder</cfif>&col=F&folder_id=<cfif iscol EQ "T">col-</cfif>#folder_id#');" rel="prefetch" title="<cfif theid EQ 0><cfif iscol EQ "F"><cfif session.theuserid NEQ folder_owner AND folder_owner NEQ "">Folder of (#username#)</cfif></cfif></cfif>"><ins>&nbsp;</ins>#left(folder_name,40)#<cfif theid EQ 0><cfif iscol EQ "F"><cfif session.theuserid NEQ folder_owner AND folder_owner NEQ "">*<cfif folder_name EQ "my folder"> (#username#)</cfif></cfif></cfif></cfif>
+		<li id="<cfif iscol EQ "T">col-</cfif>#folder_id#"<cfif subhere EQ "1"> class="jstree-closed"</cfif>><a href="##" onclick="loadcontent('rightside','index.cfm?fa=<cfif iscol EQ "T">c.collections<cfelse>c.folder</cfif>&col=F&folder_id=<cfif iscol EQ "T">col-</cfif>#folder_id#');" rel="prefetch" title="<cfif theid EQ 0><cfif iscol EQ "F"><cfif session.theuserid NEQ folder_owner AND folder_owner NEQ "">Folder of (#username#)</cfif></cfif></cfif>"><ins>&nbsp;</ins>#left(folder_name,40)#<cfif theid EQ 0><cfif iscol EQ "F"><cfif session.theuserid NEQ folder_owner AND folder_owner NEQ "">*<cfif folder_name EQ "my folder"> (#username#)</cfif></cfif></cfif></cfif>
 		</a></li>
 		</cfoutput>
 	<!--- If we come from a move action --->
@@ -2986,6 +2986,9 @@
 				<!--- upload --->
 				<cfelseif session.type EQ "uploadinto">
 					<a href="##" onclick="showwindow('index.cfm?fa=c.asset_add&folder_id=#folder_id#','Add your files',650,1);return false;">
+				<!--- copy metadata --->
+				<cfelseif session.type EQ "copymetadata">
+					<a href="##" onclick="loadcontent('result','index.cfm?fa=#session.savehere#&folder_id=#folder_id#&what=#session.thetype#&fid=#session.file_id#');destroywindow(2);return false;">
 				<!--- customization --->
 				<cfelseif session.type EQ "customization">
 					<a href="##" onclick="javascript:document.form_admin_custom.folder_redirect.value = '#folder_id#'; document.form_admin_custom.folder_name.value = '#folder_name#';destroywindow(1);">
@@ -3972,7 +3975,17 @@
 		FROM #session.hostdbprefix#files
 		WHERE folder_id_r = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#arguments.thestruct.folder_id#">
 		AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
-	</cfif>
+		<cfif arguments.thestruct.thekind EQ "ALL">
+			AND lower(file_extension) IN (<cfqueryparam cfsqltype="cf_sql_varchar" value="doc,xls,docx,xlsx,pdf" list="true">) 
+		<cfelseif arguments.thestruct.thekind NEQ "other">
+			AND (
+			lower(file_extension) = <cfqueryparam value="#arguments.thestruct.thekind#" cfsqltype="cf_sql_varchar">
+			OR lower(file_extension) = <cfqueryparam value="#arguments.thestruct.thekind#x" cfsqltype="cf_sql_varchar">
+			)
+		<cfelse>
+			AND lower(file_extension) NOT IN (<cfqueryparam cfsqltype="cf_sql_varchar" value="doc,xls,docx,xlsx,pdf" list="true">)
+		</cfif>
+	</Cfif>
 	</cfquery>
 	<!--- Set the valuelist --->
 	<cfset var l = valuelist(qry.id)>
@@ -3984,12 +3997,25 @@
 <!--- Store selection --->
 <cffunction name="store_selection" output="false" returntype="void">
 	<cfargument name="thestruct" required="yes" type="struct">
+	<!---<cfdump var="#arguments.thestruct.del_file_id#"><cfabort>--->
 	<!--- session --->
 	<cfparam name="session.file_id" default="">
+	<cfparam name="arguments.thestruct.del_file_id" default="">
 	<!--- Now simply add the selected fileids to the session --->
-	<cfset var thelist = session.file_id & "," & arguments.thestruct.file_id>
+	<cfset var thelist = session.file_id & "," & arguments.thestruct.file_id >
 	<cfset session.file_id = ListRemoveduplicates(thelist)>
 	<cfset session.thefileid = session.file_id>
+	<cfif session.file_id NEQ "">
+		<cfset list_file_ids = "">
+		<cfloop index="idx" from="1" to="#listlen(session.file_id)#">
+			<cfif !listFindNoCase(#arguments.thestruct.del_file_id#,#listGetAt(session.file_id,idx)#)>
+				<cfset list_file_ids = listAppend(list_file_ids,#listGetAt(session.file_id,idx)#,',')>		
+			</cfif>
+		</cfloop>
+		<cfset session.thefileid = list_file_ids>
+		<cfset session.file_id = list_file_ids>
+	</cfif>
+	
 </cffunction>
 
 <!--- Get foldername --->

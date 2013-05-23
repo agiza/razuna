@@ -456,10 +456,10 @@ function storeids(theform){
            		fileids += document.forms[theform].elements[i].value + ',';
            		// filetypes += document.forms[theform].elements[i].value + '-' + document.forms[theform].thetype.value + ',';
            	}
-           	// else {
-           	// 	del_fileids += document.forms[theform].elements[i].value + ',';
+           	else {
+           	 	del_fileids += document.forms[theform].elements[i].value + ',';
            	// 	// del_filetypes += document.forms[theform].elements[i].value + '-' + document.forms[theform].thetype.value + ',';
-           	// }
+           	 }
       	}
    	}
    	// Only continue if there is something selected
@@ -1595,14 +1595,14 @@ function razunatreefocus(folderid){
 }
 function razunatreefocusbranch(folderidr,folderid){
 	try{
-		$.tree.focused().open_branch('#' + folderidr);
-		$.tree.focused().select_branch('#' + folderid);
+		$.jstree._focused().open_branch('#' + folderidr);
+		$.jstree._focused().select_branch('#' + folderid);
 	}
 	catch(e) {};
 }
 function razunatreefocusdelay(folderid){
 	try{
-		$.tree.focused().select_branch('#' + folderid);
+		$.jstree._focused().select_branch('#' + folderid);
 	}
 	catch(e) {};
 }
