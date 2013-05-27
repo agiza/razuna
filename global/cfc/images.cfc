@@ -1233,10 +1233,6 @@
 	<cfinvoke component="assets" method="iswindows" returnvariable="arguments.thestruct.iswindows">
 	<!--- Put the id into a variable --->
 	<cfset theimageid = #arguments.thestruct.file_id#>
-	<!--- set session.artofimage value if it is empty  --->
-	<cfif session.artofimage EQ "">
-		<cfset session.artofimage = arguments.thestruct.artofimage>
-	</cfif>
 	<!--- Start the loop to get the different kinds of images --->
 	<cfloop delimiters="," list="#session.artofimage#" index="art">
 		<!--- Since the image format could be from the related table we need to check this here so if the value is a number it is the id for the image --->
@@ -1307,12 +1303,12 @@
 						<cfinvokeargument name="awsbucket" value="#attributes.intstruct.awsbucket#">
 					</cfinvoke>
 				</cfthread>
-			<!--- Nirvanix --->
+			<!--- akamai --->
 			<cfelseif application.razuna.storage EQ "akamai">
 				<cfthread name="download#art##theimageid#" intstruct="#arguments.thestruct#">
 					<cfhttp url="#attributes.intstruct.akaurl##attributes.intstruct.akaimg#/#attributes.intstruct.theimgname#" file="#attributes.intstruct.thefinalname#" path="#attributes.intstruct.thepath#/outgoing/#attributes.intstruct.tempfolder#/#attributes.intstruct.art#"></cfhttp>
 				</cfthread>
-			</cfif>
+		</cfif>
 		<!--- It is a local link --->
 		<cfelseif qry.link_kind EQ "lan">
 			<cfthread name="download#art##theimageid#" intstruct="#arguments.thestruct#">
@@ -1320,7 +1316,7 @@
 			</cfthread>
 		</cfif>
 		<!--- Wait for the thread above until the file is downloaded fully --->
-		<cfthread action="join" name="download#art##theimageid#" />
+			<cfthread action="join" name="download#art##theimageid#" />
 		<!--- Set extension --->
 		<cfif thecolname EQ "thumb">
 			<cfset theext = qry.thumb_extension>
@@ -1350,16 +1346,29 @@
 	<cfset zipname = replace(arguments.thestruct.zipname,"/","-","all")>
 	<cfset zipname = replace(zipname,"\","-","all")>
 	<cfset zipname = replace(zipname, " ", "_", "All")>
-	<cfset zipname = zipname & ".zip">
+	<cfif session.createzip EQ 'no'>
+		<cfset zipname = zipname>
+	<cfelse>
+		<cfset zipname = zipname & ".zip">
+	</cfif>
 	<!--- Remove any file with the same name in this directory. Wrap in a cftry so if the file does not exist we don't have a error --->
 	<cftry>
 		<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#zipname#">
 		<cfcatch type="any"></cfcatch>
 	</cftry>
-	<!--- Zip the folder --->
-	<cfzip action="create" ZIPFILE="#arguments.thestruct.thepath#/outgoing/#zipname#" source="#arguments.thestruct.thepath#/outgoing/#tempfolder#" recurse="true" timeout="300" />
-	<!--- Remove the temp folder --->
-	<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#" recurse="yes">
+	<cfif session.createzip EQ 'no'>
+		<!--- Delete if any folder exists in same name--->
+		<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#zipname#")>
+			<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" recurse="true">
+		</cfif>
+		<!--- Rename the temp folder --->
+		<cfdirectory action="rename" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#" newdirectory="#arguments.thestruct.thepath#/outgoing/#zipname#" mode="775">
+	<cfelse>
+		<!--- Zip the folder --->
+		<cfzip action="create" ZIPFILE="#arguments.thestruct.thepath#/outgoing/#zipname#" source="#arguments.thestruct.thepath#/outgoing/#tempfolder#" recurse="true" timeout="300" />
+		<!--- Remove the temp folder --->
+		<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#" recurse="yes">
+	</cfif>
 	<!--- Return --->
 	<cfreturn zipname>
 </cffunction>

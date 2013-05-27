@@ -925,11 +925,23 @@
 			<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#newnamenoext#.zip">
 			<cfcatch type="any"></cfcatch>
 		</cftry>
-		<!--- Zip the file --->	
-		<cfzip action="create" ZIPFILE="#arguments.thestruct.thepath#/outgoing/#newnamenoext#.zip" source="#arguments.thestruct.thepath#/outgoing/#newname#" recurse="true" timeout="300" />
-		<!--- Remove the file --->
-		<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#newname#">
-		<cfset newname="#newnamenoext#.zip">
+		<cfif session.createzip EQ 'no'>
+			<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#")>
+				<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#" recurse="true">
+			</cfif>
+			<cfdirectory action="create" directory="#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#">
+			<cffile action="move" destination="#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#" source="#arguments.thestruct.thepath#/outgoing/#newname#" >
+		<cfelse>
+			<!--- Zip the file --->	
+			<cfzip action="create" ZIPFILE="#arguments.thestruct.thepath#/outgoing/#newnamenoext#.zip" source="#arguments.thestruct.thepath#/outgoing/#newname#" recurse="true" timeout="300" />
+			<!--- Remove the file --->
+			<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#newname#">
+		</cfif>
+		<cfif session.createzip EQ 'no'>
+			<cfset newname="#newnamenoext#">
+		<cfelse>
+			<cfset newname="#newnamenoext#.zip">
+		</cfif>
 		<!--- Return --->
 		<cfreturn newname>
 	</cffunction>
