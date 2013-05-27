@@ -1624,15 +1624,11 @@
 	</cfif>
 	<!--- Remove any file with the same name in this directory. Wrap in a cftry so if the file does not exist we don't have a error --->
 	<cftry>
-		<cfif session.createzip EQ 'no'>
-			<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" recurse="yes">
-		<cfelse>
-			<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#zipname#">
-		</cfif>
+		<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#zipname#">
 		<cfcatch type="any"></cfcatch>
 	</cftry>
 	<cfif session.createzip EQ 'no'>
-		<!--- Delete if any folder exists in same name--->
+		<!--- Delete if any folder exists in same name --->
 		<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#zipname#")>
 			<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" recurse="true">
 		</cfif>

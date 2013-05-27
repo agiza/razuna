@@ -1357,7 +1357,7 @@
 		<cfcatch type="any"></cfcatch>
 	</cftry>
 	<cfif session.createzip EQ 'no'>
-		<!--- Delete if any folder exists in same name--->
+		<!--- Delete if any folder exists in same name --->
 		<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#zipname#")>
 			<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" recurse="true">
 		</cfif>

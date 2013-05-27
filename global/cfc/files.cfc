@@ -926,6 +926,7 @@
 			<cfcatch type="any"></cfcatch>
 		</cftry>
 		<cfif session.createzip EQ 'no'>
+			<!--- Delete if any folder exists in same name --->
 			<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#")>
 				<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#" recurse="true">
 			</cfif>
@@ -937,11 +938,7 @@
 			<!--- Remove the file --->
 			<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#newname#">
 		</cfif>
-		<cfif session.createzip EQ 'no'>
-			<cfset newname="#newnamenoext#">
-		<cfelse>
-			<cfset newname="#newnamenoext#.zip">
-		</cfif>
+		<cfset newname="#newnamenoext#.zip">
 		<!--- Return --->
 		<cfreturn newname>
 	</cffunction>

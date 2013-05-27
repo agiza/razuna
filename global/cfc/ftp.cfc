@@ -106,6 +106,7 @@
 						</cfloop>
 					</cfloop>
 				<cfelse>
+					<!--- Get the files --->
 					<cfdirectory action="list" directory="#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#" name="myFile" type="file">
 					<!--- Put the file on the FTP Site --->
 					<cfset Ftpputfile(ftpdata=o, remotefile="#arguments.thestruct.folderpath#/#arguments.thestruct.zipname#/#myFile.name#", localfile="#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#/#myFile.name#", passive=session.ftp_passive)>
