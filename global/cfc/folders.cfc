@@ -4054,4 +4054,185 @@
 	<cfreturn qry_folder />
 </cffunction>
 
+<!--- Get syn folder details---> 
+<cffunction name="getsynfolderdetails" output="false">
+	<cfargument name="thestruct" required="yes" type="struct">
+	<!--- param --->
+	<cfparam name="arguments.thestruct.langcount" default="1" />
+	<cfparam name="arguments.thestruct.link_kind" default="lan" /> 
+	<!--- Get the cachetoken for here --->
+	<cfset variables.cachetoken = getcachetoken("folders")>
+	<cfinvoke method="getfolderproperties" returnvariable="qGetRootLinkPath">
+		<cfinvokeargument name="folder_id" value="#arguments.thestruct.folder_id#">
+	</cfinvoke>
+	<cfset var link_path_root="#qGetRootLinkPath.link_path#">
+	<cfset var folder_level_root="#qGetRootLinkPath.folder_level#">
+	<cfset var folderidr="#arguments.thestruct.folder_id#">
+	<cfset var folder_main_id_r="#qGetRootLinkPath.rid#">
+	<cfdirectory action="list" directory="#link_path_root#" name="thedir" recurse="true" type="dir">
+	<!--- Sort the above list in a query because cfdirectory sorting sucks --->
+	<cfquery dbtype="query" name="thedir">
+	SELECT *
+	FROM thedir
+	WHERE name NOT LIKE '__MACOSX%'
+	ORDER BY name
+	</cfquery>
+	<!--- Create Directories --->
+	<cfif thedir.RecordCount GT 0>
+		<cfloop query="thedir">
+			<cfset temp="">
+			<cfset var folderlevel = "">
+			<!--- Check how long the folder list is --->
+			<cfset var namelistlen = listlen(name,FileSeparator())>
+			<!--- If longer then 1 we need to get the folder_id_r of the previous folder --->
+				
+			<cfif namelistlen GT 1>
+				<!--- Get the list entry at one higher then the current len --->
+				<cfset var lenminusone = namelistlen - 1>
+				<cfset var fnameforqry = ListGetAt(name, lenminusone, FileSeparator())>
+				<cfset var thedirlen = listLen(thedir.name, FileSeparator())-1>
+				<cfset temp="#arguments.thestruct.folder_id#">
+				<cfloop index="i" from=1 to="#thedirlen#">
+					<cfset folder_name = listGetAt(thedir.name, i, FileSeparator())>
+					<cfquery name="qryGetFolderDetails" datasource="#variables.dsn#">
+						SELECT /* #variables.cachetoken#getsynfolderdetails */ folder_id,folder_name,folder_level FROM  #session.hostdbprefix#folders 
+						WHERE lower(folder_name) = <cfqueryparam cfsqltype="cf_sql_varchar" value="#lcase(folder_name)#">
+						AND folder_id_r = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#temp#">
+						AND folder_main_id_r = <cfqueryparam value="#folder_main_id_r#" cfsqltype="cf_sql_varchar">
+						AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+					</cfquery>
+					<cfset temp="#qryGetFolderDetails.folder_id#">
+				</cfloop>
+				<cfset folderlevel =  val(qryGetFolderDetails.folder_level) + 1>
+				<!--- Set the folder_id_r in var --->
+				<!---<cfset var fidr = qryfidr.folder_id>--->
+				<cfset var fidr = temp>
+				<cfset var fname = listlast(name, FileSeparator())>
+			<cfelse>
+				<cfset folderlevel = val(folder_level_root)+1>
+				<cfset var fname = name>
+				<cfset var fidr = folderIdr>
+			</cfif>
+			<!--- Query to get the folder_id_r --->
+			<cfquery datasource="#variables.dsn#" name="qryfidr">
+				SELECT /* #variables.cachetoken#getsynfolderdetails */ folder_id
+				FROM #session.hostdbprefix#folders
+				WHERE lower(folder_name) = <cfqueryparam value="#lcase(fname)#" cfsqltype="cf_sql_varchar">
+				AND folder_id_r = <cfqueryparam value="#fidr#" cfsqltype="cf_sql_varchar">
+				AND folder_main_id_r = <cfqueryparam value="#folder_main_id_r#" cfsqltype="cf_sql_varchar">
+			</cfquery>
+			<!--- Add the Folder to DB --->
+			<cfif qryfidr.recordcount eq 0>
+				<cfquery datasource="#variables.dsn#">
+					INSERT INTO #session.hostdbprefix#folders
+					(folder_id, folder_name, folder_level, folder_id_r, folder_main_id_r,link_path, folder_owner, folder_create_date, folder_change_date, folder_create_time, folder_change_time, host_id)
+					values (
+					<cfqueryparam value="#createuuid("")#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#fname#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#folderlevel#" cfsqltype="CF_SQL_NUMERIC">,
+					<cfqueryparam value="#fidr#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#folder_main_id_r#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#thedir.directory#\#thedir.name#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#session.theuserid#" cfsqltype="CF_SQL_VARCHAR">,
+					<cfqueryparam value="#now()#" cfsqltype="cf_sql_date">,
+					<cfqueryparam value="#now()#" cfsqltype="cf_sql_date">,
+					<cfqueryparam value="#now()#" cfsqltype="cf_sql_timestamp">,
+					<cfqueryparam value="#now()#" cfsqltype="cf_sql_timestamp">,
+					<cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+					)
+				</cfquery>
+			</cfif>
+		</cfloop>
+	</cfif>
+	<!--- Call to get the recursive folder ids --->
+	<cfinvoke method="recfolder" returnvariable="folderids">
+		<cfinvokeargument name="thelist" value="#arguments.thestruct.folder_id#">
+	</cfinvoke>
+	<cfloop list="#folderids#" index="i">
+		<!--- Get folder details --->
+		<cfinvoke method="getfolderproperties" returnvariable="qry">
+			<cfinvokeargument name="folder_id" value="#i#">
+		</cfinvoke>
+		<cfset link_path_location=qry.link_path>
+		<cfquery name="getsub_folder" datasource="#application.razuna.datasource#">
+			SELECT /* #variables.cachetoken#getsynfolderdetails */ folder_id,folder_name,link_path 
+			FROM #session.hostdbprefix#folders
+			WHERE folder_id_r = <cfqueryparam CFSQLType="CF_SQL_VARCHAR" value="#i#">
+			AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+		</cfquery>
+		<cfif getsub_folder.RecordCount NEQ 0>
+			<cfloop query="getsub_folder" >
+				<cfset uploadFolderPath = "#link_path_location#/#getsub_folder.folder_name#">
+				<cfif NOT DirectoryExists(uploadFolderPath)>
+					<cfdirectory action = "create" directory = "#uploadFolderPath#" >
+					<cfquery name="qUpdate" datasource="#application.razuna.datasource#">
+						UPDATE #session.hostdbprefix#folders 
+						SET link_path = <cfqueryparam CFSQLType="CF_SQL_VARCHAR" value="#uploadFolderPath#">
+						WHERE folder_id = <cfqueryparam CFSQLType="CF_SQL_VARCHAR" value="#getsub_folder.folder_id#">
+						AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#"> 
+					</cfquery>
+				</cfif>
+			</cfloop>
+		</cfif>
+		<!--- Get asset details --->
+		<cfquery name="qry_detail" datasource="#application.razuna.datasource#">
+			SELECT  /* #variables.cachetoken#getsynfolderdetails */ 
+				img_id AS ID, img_filename AS filename, img_filename_org AS org_name, folder_id_r, link_path_url, path_to_asset, 'img' as type,cloud_url_org
+			FROM #session.hostdbprefix#images
+			WHERE host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+			AND folder_id_r = <cfqueryparam CFSQLType="CF_SQL_VARCHAR" value="#i#">
+			UNION ALL
+			SELECT vid_id AS ID, vid_filename AS filename, vid_name_org AS org_name, folder_id_r, link_path_url, path_to_asset, 'vid' as type,cloud_url_org
+			FROM #session.hostdbprefix#videos
+			WHERE host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+			AND folder_id_r = <cfqueryparam CFSQLType="CF_SQL_VARCHAR" value="#i#">
+			UNION ALL
+			SELECT aud_id AS ID, aud_name AS filename, aud_name_org AS org_name, folder_id_r, link_path_url, path_to_asset, 'aud' as type,cloud_url_org
+			FROM #session.hostdbprefix#audios
+			WHERE host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+			AND folder_id_r = <cfqueryparam CFSQLType="CF_SQL_VARCHAR" value="#i#">
+			UNION ALL
+			SELECT file_id AS ID, file_name AS filename, file_name_org AS org_name, folder_id_r, link_path_url, path_to_asset, 'doc' as type,cloud_url_org
+			FROM #session.hostdbprefix#files
+			WHERE host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+			AND folder_id_r = <cfqueryparam CFSQLType="CF_SQL_VARCHAR" value="#i#">
+		</cfquery>
+		<cfdirectory action="list" directory="#qry.link_path#" name="arguments.thestruct.thefiles" type="file">
+		<cfif qry_detail.RecordCount>
+			<cfloop query="qry_detail">
+				<cfif !listFindNoCase(valueList(arguments.thestruct.thefiles.name),qry_detail.org_name)>
+					<cfif application.razuna.storage EQ "local">
+						<!--- copy file from local --->
+						<cfif qry_detail.org_name NEQ "" AND fileExists("#arguments.thestruct.assetpath#/#session.hostid#/#qry_detail.path_to_asset#/#qry_detail.org_name#")>
+							<cffile action="copy" destination="#qry.link_path#" source="#arguments.thestruct.assetpath#/#session.hostid#/#qry_detail.path_to_asset#/#qry_detail.org_name#">
+						</cfif>
+					<cfelse>
+						<!--- copy file from cloud --->
+						<cffile action="copy" destination="#qry.link_path#" source="#qry_detail.cloud_url_org#">
+					</cfif>
+				</cfif>
+			</cfloop>
+		</cfif>
+		<cfif arguments.thestruct.thefiles.RecordCount>
+			<cfloop query="arguments.thestruct.thefiles">
+				<cfif !listFindNoCase(valueList(qry_detail.org_name),arguments.thestruct.thefiles.name)>
+					<cfif directoryExists(#qry.link_path#)>
+						<cfset arguments.thestruct.link_path_url = arguments.thestruct.thefiles.directory & "/" & arguments.thestruct.thefiles.name>
+						<cfset arguments.thestruct.orgsize = arguments.thestruct.thefiles.size>
+						<cfset arguments.thestruct.folder_id = i>
+						<cfset arguments.thestruct.theid = i>
+						<cfset arguments.thestruct.dsn = application.razuna.datasource>
+						<cfset arguments.thestruct.setid = variables.setid>
+						<cfset arguments.thestruct.folder_name=listLast(#qry.link_path#,'\')>
+						<cfset arguments.thestruct.database = variables.database>
+						<!--- Now add the asset --->
+						<cfinvoke component="assets" method="addassetlink" thestruct="#arguments.thestruct#">
+					</cfif>
+				</cfif>
+			</cfloop>
+		</cfif>
+	</cfloop>
+	<cfset resetcachetoken("folders")>
+</cffunction>
+
 </cfcomponent>

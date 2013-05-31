@@ -1643,6 +1643,22 @@
 		<!-- Show -->
 		<do action="ajax.folder_check" />
 	</fuseaction>
+	
+	<!-- Folder sync -->
+    <fuseaction name="folder_sync">
+		<!-- Param -->
+		<set name="attributes.thepath" value="#thispath#" />
+		<set name="attributes.rootpath" value="#ExpandPath('../..')#" />
+		<set name="attributes.folder_id" value="0" overwrite="false" />
+        <set name="attributes.iscol" value="F" overwrite="false" />
+        <set name="attributes.showsubfolders" value="F" overwrite="false" />
+		<!-- Action: Get asset path -->
+		<do action="assetpath" />
+        <!-- CFC: Get Sub-folders -->
+        <invoke object="myFusebox.getApplicationData().folders" methodcall="getsynfolderdetails(attributes)" returnvariable="folderids" />
+		<!-- Flush cache -->
+		<do action="flushcache" />
+    </fuseaction>
 	<!--
 		END: FOLDER CONTENT
 	 -->

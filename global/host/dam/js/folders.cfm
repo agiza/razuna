@@ -216,4 +216,12 @@
 		</cfoutput></cfloop>
 		return searchtext;
 	}
+	//for sync folder
+	function syncfolder(theid,isdetail,iscol){
+		// Reload Explorer
+		$('#explorer').load('index.cfm?fa=c.explorer');
+		// Show the update feedback
+		$("#synupdatetext").css({visibility: 'visible'});
+		$("#synupdatetext").animate({opacity: 1.0}, 3000).fadeTo("slow", 0);
+	}
 </script>

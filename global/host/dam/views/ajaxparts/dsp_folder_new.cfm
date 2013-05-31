@@ -180,7 +180,12 @@
 				<cfif (Request.securityobj.CheckSystemAdminUser() OR Request.securityobj.CheckAdministratorUser())>
 					<input type="button" name="removefolder" value="#myFusebox.getApplicationData().defaults.trans("remove_folder")#" class="button" onclick="showwindow('#myself#ajax.remove_folder&folder_id=#attributes.folder_id#&iscol=#qry_folder.folder_is_collection#','#myFusebox.getApplicationData().defaults.trans("remove_folder")#',400,1);" style="margin-right:20px;">
 				<cfelseif qry_folder.folder_name NEQ "my folder" AND qry_folder.folder_owner EQ session.theuserid>
-					<input type="button" name="removefolder" value="#myFusebox.getApplicationData().defaults.trans("remove_folder")#" class="button" onclick="showwindow('#myself#ajax.remove_folder&folder_id=#attributes.folder_id#&iscol=#qry_folder.folder_is_collection#','#myFusebox.getApplicationData().defaults.trans("remove_folder")#',400,1);" style="margin-right:20px;">
+					<input type="button" name="removefolder" value="#myFusebox.getApplicationData().defaults.trans("remove_folder")#" class="button" onclick="showwindow('#myself#ajax.remove_folder&folder_id=#attributes.folder_id#&iscol=#qry_folder.folder_is_collection#','#myFusebox.getApplicationData().defaults.trans("remove_folder")#',400,1);">
+				</cfif>
+			</cfif>
+			<cfif attributes.isdetail EQ "T">
+				<cfif qry_folder.link_path NEQ ''>
+					<input type="button" name="sync" value="#myFusebox.getApplicationData().defaults.trans("sync")#" class="button" onclick="syncfolder('#attributes.theid#','#attributes.isdetail#','<cfif qry_folder.folder_is_collection EQ "T" OR attributes.iscol EQ "T">T<cfelse>F</cfif>','false',true);return false;" style="margin-right:20px;">
 				</cfif>
 			</cfif>
 			<!--- <cfif attributes.isdetail NEQ "T">
