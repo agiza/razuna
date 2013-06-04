@@ -87,7 +87,6 @@
 	<cftry>
 		<!--- Open ftp connection --->
         <cfset var o = ftpopen(server=session.ftp_server,username=session.ftp_user,password=session.ftp_pass,passive=session.ftp_passive)>
-		<!---  --->
 		<cfif structKeyExists(session,"createzip") AND session.createzip EQ 'no'>
 			<!--- Get the directories --->
 			<cfdirectory action="list" directory="#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.thefile#" name="myDir" type="dir">

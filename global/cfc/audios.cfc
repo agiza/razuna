@@ -1173,7 +1173,7 @@
 	<!--- Start the loop to get the different kinds of audios --->
 	<cfloop delimiters="," list="#session.artofimage#" index="art">
 		<!--- Since the video format could be from the related table we need to check this here so if the value is a number it is the id for the video --->
-		<!---<cfif isnumeric(art)>--->
+		<!---<cfif isnumeric(art)> --->
 		<cfif art NEQ "audio">
 			<!--- Set the video id for this type of format and set the extension --->
 			<cfset theaudioid = art>

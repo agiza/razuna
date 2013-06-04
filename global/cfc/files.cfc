@@ -930,7 +930,7 @@
 			<cfcatch type="any"></cfcatch>
 		</cftry>
 		<cfif structKeyExists(session,"createzip") AND session.createzip EQ 'no'>
-			<!--- Delete if any folder exists in same name and create the new directory--->
+			<!--- Delete if any folder exists in same name and create the new directory --->
 			<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#zipname#")>
 				<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" recurse="true">
 				<cfdirectory action="create" directory="#arguments.thestruct.thepath#/outgoing/#zipname#">

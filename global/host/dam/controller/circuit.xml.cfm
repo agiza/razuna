@@ -3041,7 +3041,7 @@
 		<!-- Show -->
 		<do action="ajax.ftp_send" />
 	</fuseaction>
-	<!-- FTP Login to Server -->
+	<!--FTP Login to Server -->
 	<fuseaction name="ftp_gologin">
 		<!-- XFA -->
 		<xfa name="submitassetftp" value="c.ftp_put" />

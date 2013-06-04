@@ -140,7 +140,7 @@
 				</td>
 			</tr>
 		</cfif>
-		<!--- check create zip --->
+		<!--- check zip file --->
 		<cfif listLast(attributes.filename,'.') NEQ "zip">
 		<tr>
 			<td>#myFusebox.getApplicationData().defaults.trans("create_zip")#</td>
