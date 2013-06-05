@@ -2016,6 +2016,8 @@
 		<set name="attributes.logswhat" value="log_assets" />
 		<!-- CFC -->
 		<invoke object="myFusebox.getApplicationData().log" methodcall="get_log_assets(attributes)" returnvariable="qry_log" />
+		<!-- CFC: Customization -->
+		<invoke object="myFusebox.getApplicationData().settings" methodcall="get_customization()" returnvariable="cs" />
 		<!-- Show -->
 		<do action="ajax.log_history" />
 	</fuseaction>
@@ -2023,6 +2025,8 @@
 	<fuseaction name="log_history_search">
 		<!-- CFC: Search log -->
 		<invoke object="myFusebox.getApplicationData().log" methodcall="log_search(attributes)" returnvariable="qry_log" />
+		<!-- CFC: Customization -->
+		<invoke object="myFusebox.getApplicationData().settings" methodcall="get_customization()" returnvariable="cs" />
 		<!-- Show -->
 		<do action="ajax.log_history" />
 	</fuseaction>
@@ -3055,7 +3059,7 @@
 		<set name="attributes.folderpath" value="" overwrite="false" />
 		<set name="attributes.artofimage" value="" overwrite="false" />
 		<set name="attributes.createzip" value="" overwrite="false" />
-		<!-- Store values in session since we need them later on some more -->
+		<!--Store values in session since we need them later on some more-->
 		<set name="session.ftp_server" value="#attributes.ftp_server#" />
 		<set name="session.ftp_user" value="#attributes.ftp_user#" />
 		<set name="session.ftp_pass" value="#attributes.ftp_pass#" />
