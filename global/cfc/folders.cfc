@@ -219,7 +219,7 @@
 	<cfquery name="qLocal" datasource="#Variables.dsn#" cachedwithin="1" region="razcache">
 	SELECT /* #variables.cachetoken#getfolderproperties */ f.folder_id, f.folder_id_r, f.folder_name, f.folder_level, f.folder_of_user,
 	f.folder_is_collection, f.folder_owner, folder_main_id_r rid, f.folder_shared, f.folder_name_shared,
-	share_dl_org, share_dl_thumb, share_comments, share_upload, share_order, share_order_user
+	share_dl_org, share_dl_thumb, share_comments, share_upload, share_order, share_order_user,f.link_path
 	FROM #session.hostdbprefix#folders f
 	WHERE folder_id = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#Arguments.folder_id#">
 	AND f.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
@@ -467,6 +467,14 @@
 		<cfset arguments.thestruct.folder_name = name>
 		<!--- Add the folder --->
 		<cfinvoke method="fnew_detail" thestruct="#arguments.thestruct#" returnvariable="newfolderid">
+		<cfif len(arguments.thestruct.link_path)>
+			<cfquery datasource="#variables.dsn#">
+				UPDATE #session.hostdbprefix#folders 
+				SET link_path = <cfqueryparam value="#arguments.thestruct.link_path#/#arguments.thestruct.folder_name#" cfsqltype="cf_sql_varchar">
+				WHERE folder_id = <cfqueryparam value="#newfolderid#" cfsqltype="cf_sql_varchar"> 
+				AND host_id = <cfqueryparam value="#session.hostid#">
+			</cfquery>
+		</cfif>
 		<!--- If we store on the file system we create the folder here --->
 		<cfif application.razuna.storage EQ "local" OR application.razuna.storage EQ "akamai">
 			<cfif !directoryexists("#arguments.thestruct.assetpath#/#session.hostid#/#newfolderid#")>
@@ -549,6 +557,14 @@
 		<cfset arguments.thestruct.folder_name = name>
 		<!--- Add the folder --->
 		<cfinvoke method="fnew_detail" thestruct="#arguments.thestruct#" returnvariable="newfolderid">
+		<cfif len(arguments.thestruct.link_path)>
+			<cfquery datasource="#variables.dsn#">
+				UPDATE #session.hostdbprefix#folders 
+				SET link_path = <cfqueryparam value="#arguments.thestruct.link_path#/#arguments.thestruct.folder_name#" cfsqltype="cf_sql_varchar">
+				WHERE folder_id = <cfqueryparam value="#newfolderid#" cfsqltype="cf_sql_varchar"> 
+				AND host_id = <cfqueryparam value="#session.hostid#">
+			</cfquery>
+		</cfif>
 		<!--- If we store on the file system we create the folder here --->
 		<cfif application.razuna.storage EQ "local" OR application.razuna.storage EQ "akamai">
 			<cfif !directoryexists("#arguments.thestruct.assetpath#/#session.hostid#/#newfolderid#")>
@@ -631,6 +647,14 @@
 		<cfset arguments.thestruct.folder_name = name>
 		<!--- Add the folder --->
 		<cfinvoke method="fnew_detail" thestruct="#arguments.thestruct#" returnvariable="newfolderid">
+		<cfif len(arguments.thestruct.link_path)>
+			<cfquery datasource="#variables.dsn#">
+				UPDATE #session.hostdbprefix#folders 
+				SET link_path = <cfqueryparam value="#arguments.thestruct.link_path#/#arguments.thestruct.folder_name#" cfsqltype="cf_sql_varchar">
+				WHERE folder_id = <cfqueryparam value="#newfolderid#" cfsqltype="cf_sql_varchar"> 
+				AND host_id = <cfqueryparam value="#session.hostid#">
+			</cfquery>
+		</cfif>
 		<!--- If we store on the file system we create the folder here --->
 		<cfif application.razuna.storage EQ "local" OR application.razuna.storage EQ "akamai">
 			<cfif !directoryexists("#arguments.thestruct.assetpath#/#session.hostid#/#newfolderid#")>
@@ -713,6 +737,14 @@
 		<cfset arguments.thestruct.folder_name = name>
 		<!--- Add the folder --->
 		<cfinvoke method="fnew_detail" thestruct="#arguments.thestruct#" returnvariable="newfolderid">
+		<cfif len(arguments.thestruct.link_path)>
+			<cfquery datasource="#variables.dsn#">
+				UPDATE #session.hostdbprefix#folders 
+				SET link_path = <cfqueryparam value="#arguments.thestruct.link_path#/#arguments.thestruct.folder_name#" cfsqltype="cf_sql_varchar">
+				WHERE folder_id = <cfqueryparam value="#newfolderid#" cfsqltype="cf_sql_varchar"> 
+				AND host_id = <cfqueryparam value="#session.hostid#">
+			</cfquery>
+		</cfif>
 		<!--- If we store on the file system we create the folder here --->
 		<cfif application.razuna.storage EQ "local" OR application.razuna.storage EQ "akamai">
 			<cfif !directoryexists("#arguments.thestruct.assetpath#/#session.hostid#/#newfolderid#")>
@@ -795,6 +827,14 @@
 		<cfset arguments.thestruct.folder_name = name>
 		<!--- Add the folder --->
 		<cfinvoke method="fnew_detail" thestruct="#arguments.thestruct#" returnvariable="newfolderid">
+		<cfif len(arguments.thestruct.link_path)>
+			<cfquery datasource="#variables.dsn#">
+				UPDATE #session.hostdbprefix#folders 
+				SET link_path = <cfqueryparam value="#arguments.thestruct.link_path#/#arguments.thestruct.folder_name#" cfsqltype="cf_sql_varchar">
+				WHERE folder_id = <cfqueryparam value="#newfolderid#" cfsqltype="cf_sql_varchar"> 
+				AND host_id = <cfqueryparam value="#session.hostid#">
+			</cfquery>
+		</cfif>
 		<!--- If we store on the file system we create the folder here --->
 		<cfif application.razuna.storage EQ "local" OR application.razuna.storage EQ "akamai">
 			<cfif !directoryexists("#arguments.thestruct.assetpath#/#session.hostid#/#newfolderid#")>
@@ -877,6 +917,14 @@
 		<cfset arguments.thestruct.folder_name = name>
 		<!--- Add the folder --->
 		<cfinvoke method="fnew_detail" thestruct="#arguments.thestruct#" returnvariable="newfolderid">
+		<cfif len(arguments.thestruct.link_path)>
+			<cfquery datasource="#variables.dsn#">
+				UPDATE #session.hostdbprefix#folders 
+				SET link_path = <cfqueryparam value="#arguments.thestruct.link_path#/#arguments.thestruct.folder_name#" cfsqltype="cf_sql_varchar">
+				WHERE folder_id = <cfqueryparam value="#newfolderid#" cfsqltype="cf_sql_varchar"> 
+				AND host_id = <cfqueryparam value="#session.hostid#">
+			</cfquery>
+		</cfif>
 		<!--- If we store on the file system we create the folder here --->
 		<cfif application.razuna.storage EQ "local" OR application.razuna.storage EQ "akamai">
 			<cfif !directoryexists("#arguments.thestruct.assetpath#/#session.hostid#/#newfolderid#")>
@@ -959,6 +1007,14 @@
 		<cfset arguments.thestruct.folder_name = name>
 		<!--- Add the folder --->
 		<cfinvoke method="fnew_detail" thestruct="#arguments.thestruct#" returnvariable="newfolderid">
+		<cfif len(arguments.thestruct.link_path)>
+			<cfquery datasource="#variables.dsn#">
+				UPDATE #session.hostdbprefix#folders 
+				SET link_path = <cfqueryparam value="#arguments.thestruct.link_path#/#arguments.thestruct.folder_name#" cfsqltype="cf_sql_varchar">
+				WHERE folder_id = <cfqueryparam value="#newfolderid#" cfsqltype="cf_sql_varchar"> 
+				AND host_id = <cfqueryparam value="#session.hostid#">
+			</cfquery>
+		</cfif>
 		<!--- If we store on the file system we create the folder here --->
 		<cfif application.razuna.storage EQ "local" OR application.razuna.storage EQ "akamai">
 			<cfif !directoryexists("#arguments.thestruct.assetpath#/#session.hostid#/#newfolderid#")>
@@ -1041,6 +1097,14 @@
 		<cfset arguments.thestruct.folder_name = name>
 		<!--- Add the folder --->
 		<cfinvoke method="fnew_detail" thestruct="#arguments.thestruct#" returnvariable="newfolderid">
+		<cfif len(arguments.thestruct.link_path)>
+			<cfquery datasource="#variables.dsn#">
+				UPDATE #session.hostdbprefix#folders 
+				SET link_path = <cfqueryparam value="#arguments.thestruct.link_path#/#arguments.thestruct.folder_name#" cfsqltype="cf_sql_varchar">
+				WHERE folder_id = <cfqueryparam value="#newfolderid#" cfsqltype="cf_sql_varchar"> 
+				AND host_id = <cfqueryparam value="#session.hostid#">
+			</cfquery>
+		</cfif>
 		<!--- If we store on the file system we create the folder here --->
 		<cfif application.razuna.storage EQ "local" OR application.razuna.storage EQ "akamai">
 			<cfif !directoryexists("#arguments.thestruct.assetpath#/#session.hostid#/#newfolderid#")>
@@ -1123,6 +1187,14 @@
 		<cfset arguments.thestruct.folder_name = name>
 		<!--- Add the folder --->
 		<cfinvoke method="fnew_detail" thestruct="#arguments.thestruct#" returnvariable="newfolderid">
+		<cfif len(arguments.thestruct.link_path)>
+			<cfquery datasource="#variables.dsn#">
+				UPDATE #session.hostdbprefix#folders 
+				SET link_path = <cfqueryparam value="#arguments.thestruct.link_path#/#arguments.thestruct.folder_name#" cfsqltype="cf_sql_varchar">
+				WHERE folder_id = <cfqueryparam value="#newfolderid#" cfsqltype="cf_sql_varchar"> 
+				AND host_id = <cfqueryparam value="#session.hostid#">
+			</cfquery>
+		</cfif>
 		<!--- If we store on the file system we create the folder here --->
 		<cfif application.razuna.storage EQ "local" OR application.razuna.storage EQ "akamai">
 			<cfif !directoryexists("#arguments.thestruct.assetpath#/#session.hostid#/#newfolderid#")>

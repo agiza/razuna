@@ -33,7 +33,7 @@
 	<cfif qry_folder.folder_is_collection EQ "T" OR attributes.iscol EQ "T">
 		<input type="hidden" name="coll_folder" value="T">
 	</cfif>
-	<div id="folder#attributes.theid#-#attributes.isdetail#" style="width:<cfif attributes.isdetail EQ "T">100%<cfelse>690px</cfif>;padding-bottom:60px;">
+	<div id="folder#attributes.theid#-#attributes.isdetail#" style="width:<cfif attributes.isdetail EQ "T">100%<cfelse>690px</cfif>;padding-bottom:10px;">
 		<cfif attributes.isdetail NEQ "T" AND !application.razuna.isp AND attributes.iscol NEQ "T">
 			<ul>
 				<li><a href="##folder_new#attributes.theid#">#myFusebox.getApplicationData().defaults.trans("folder_new")#</a></li>
@@ -178,7 +178,7 @@
 			</cfif>
 			<cfif attributes.isdetail EQ "T">
 				<cfif (Request.securityobj.CheckSystemAdminUser() OR Request.securityobj.CheckAdministratorUser())>
-					<input type="button" name="removefolder" value="#myFusebox.getApplicationData().defaults.trans("remove_folder")#" class="button" onclick="showwindow('#myself#ajax.remove_folder&folder_id=#attributes.folder_id#&iscol=#qry_folder.folder_is_collection#','#myFusebox.getApplicationData().defaults.trans("remove_folder")#',400,1);" style="margin-right:20px;">
+					<input type="button" name="removefolder" value="#myFusebox.getApplicationData().defaults.trans("remove_folder")#" class="button" onclick="showwindow('#myself#ajax.remove_folder&folder_id=#attributes.folder_id#&iscol=#qry_folder.folder_is_collection#','#myFusebox.getApplicationData().defaults.trans("remove_folder")#',400,1);">
 				<cfelseif qry_folder.folder_name NEQ "my folder" AND qry_folder.folder_owner EQ session.theuserid>
 					<input type="button" name="removefolder" value="#myFusebox.getApplicationData().defaults.trans("remove_folder")#" class="button" onclick="showwindow('#myself#ajax.remove_folder&folder_id=#attributes.folder_id#&iscol=#qry_folder.folder_is_collection#','#myFusebox.getApplicationData().defaults.trans("remove_folder")#',400,1);">
 				</cfif>
@@ -195,7 +195,9 @@
 		<div style="float:right;padding-top:10px;padding-right:10px;">
 			<div id="updatetext" style="float:left;color:green;padding-right:10px;padding-top:4px;font-weight:bold;"></div>
 		</div>
-	</div>
+		<div style="clear:both;"></div>
+			<div id="synupdatetext"  style="float:left;color:green;font-weight:bold;padding-left:10px;"></div>
+		</div>
 	</form>
 
 	<!--- JS --->

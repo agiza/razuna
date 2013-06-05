@@ -218,10 +218,12 @@
 	}
 	//for sync folder
 	function syncfolder(theid,isdetail,iscol){
+		// Load folder sync
+		$("#synupdatetext").load('index.cfm?fa=c.folder_sync&iscol=F&folder_id=' + theid);
 		// Reload Explorer
 		$('#explorer').load('index.cfm?fa=c.explorer');
-		// Show the update feedback
-		$("#synupdatetext").css({visibility: 'visible'});
-		$("#synupdatetext").animate({opacity: 1.0}, 3000).fadeTo("slow", 0);
+		// Show the Sync feedback
+		document.getElementById('synupdatetext').style.visibility = "visible";
+		$("#synupdatetext").html('<cfoutput>#JSStringFormat(myFusebox.getApplicationData().defaults.trans("sync_success"))#</cfoutput>');
 	}
 </script>
