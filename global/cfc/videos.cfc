@@ -116,6 +116,7 @@
 				FROM #session.hostdbprefix#videos v LEFT JOIN #session.hostdbprefix#videos_text vt ON v.vid_id = vt.vid_id_r AND vt.lang_id_r = 1
 				WHERE v.folder_id_r IN (<cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#thefolderlist#" list="true">)
 				AND (v.vid_group IS NULL OR v.vid_group = '')
+				AND v.in_trash = <cfqueryparam cfsqltype="cf_sql_varchar" value="F">
 				AND v.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
 				ORDER BY #sortby#
 				)
@@ -136,6 +137,7 @@
 			FROM #session.hostdbprefix#videos v LEFT JOIN #session.hostdbprefix#videos_text vt ON v.vid_id = vt.vid_id_r AND vt.lang_id_r = 1
 			WHERE v.folder_id_r IN (<cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#thefolderlist#" list="true">)
 			AND (v.vid_group IS NULL OR v.vid_group = '')
+			AND v.in_trash = <cfqueryparam cfsqltype="cf_sql_varchar" value="F">
 			AND v.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
 			ORDER BY #sortby#
 		)
@@ -154,6 +156,7 @@
 		FROM #session.hostdbprefix#videos v LEFT JOIN #session.hostdbprefix#videos_text vt ON v.vid_id = vt.vid_id_r AND vt.lang_id_r = 1
 		WHERE v.folder_id_r IN (<cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#thefolderlist#" list="true">)
 		AND (v.vid_group IS NULL OR v.vid_group = '')
+		AND v.in_trash = <cfqueryparam cfsqltype="cf_sql_varchar" value="F">
 		AND v.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
 		<!--- MSSQL --->
 		<cfif variables.database EQ "mssql" AND (arguments.thestruct.pages EQ "" OR arguments.thestruct.pages EQ "current")>
@@ -627,6 +630,160 @@
 	<cfreturn />
 </cffunction>
 
+<!--- TRASH THE VIDEO --->
+<cffunction name="trashvideo" output="false">
+	<cfargument name="thestruct" type="struct">
+	<!--- Get trash video --->
+	<cfquery datasource="#application.razuna.datasource#" name="qry_video">
+		SELECT * FROM #session.hostdbprefix#videos 
+		WHERE vid_id = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.thestruct.id#">
+		AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+	</cfquery>
+		<!--- Update in_trash --->
+		<cfquery datasource="#application.razuna.datasource#">
+			UPDATE #session.hostdbprefix#videos SET in_trash=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.thestruct.trash#">
+			WHERE vid_id = <cfqueryparam value="#arguments.thestruct.id#" cfsqltype="CF_SQL_VARCHAR">
+			AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+		</cfquery>
+</cffunction>
+
+<!--- TRASH MANY VIDEO --->
+<cffunction name="trashvideomany" output="true">
+	<cfargument name="thestruct" type="struct">
+	<!--- Loop --->
+	<cfloop list="#arguments.thestruct.id#" index="i" delimiters=",">
+		<cfset i = listfirst(i,"-")>
+		<!--- Update in_trash --->
+		<cfquery datasource="#application.razuna.datasource#">
+			UPDATE #session.hostdbprefix#videos 
+			SET in_trash=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.thestruct.trash#">
+			WHERE vid_id = <cfqueryparam value="#i#" cfsqltype="CF_SQL_VARCHAR">
+			AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#arguments.thestruct.hostid#">
+		</cfquery>
+	</cfloop>
+	<!--- Flush Cache --->
+	<cfset variables.cachetoken = resetcachetoken("videos")>
+	<cfset resetcachetoken("folders")>
+	<cfset resetcachetoken("search")>
+	<cfreturn />
+</cffunction>
+
+<!--- Get videos from trash --->
+<cffunction name="gettrashvideos" output="false">
+	<cfargument name="thestruct" type="struct">
+		<cfquery datasource="#application.razuna.datasource#" name="qry_video">
+			SELECT v.vid_id AS id, v.vid_filename AS filename,v.folder_id_r AS folder_id_r, v.vid_extension AS ext,v.vid_name_image AS filename_org,
+				'vid' AS kind,v.is_available AS is_available,v.vid_create_date AS date_create,v.vid_change_date AS date_change,v.link_kind AS link_kind,
+				v.link_path_url AS link_path_url,v.path_to_asset AS path_to_asset,v.cloud_url AS cloud_url,v.cloud_url_org AS cloud_url_org,v.hashtag AS hashtag 
+				<!--- Permfolder --->
+				<cfif Request.securityObj.CheckSystemAdminUser() OR Request.securityObj.CheckAdministratorUser()>
+					, 'X' as permfolder
+				<cfelse>
+					,
+					CASE
+						WHEN (SELECT DISTINCT fg5.grp_permission
+						FROM #session.hostdbprefix#folders_groups fg5
+						WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+						AND fg5.folder_id_r = v.folder_id_r
+						AND fg5.grp_id_r = '0') = 'R' THEN 'R'
+						WHEN (SELECT DISTINCT fg5.grp_permission
+						FROM #session.hostdbprefix#folders_groups fg5
+						WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+						AND fg5.folder_id_r = v.folder_id_r
+						AND fg5.grp_id_r = '0') = 'W' THEN 'W'
+						WHEN (SELECT DISTINCT fg5.grp_permission
+						FROM #session.hostdbprefix#folders_groups fg5
+						WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+						AND fg5.folder_id_r = v.folder_id_r
+						AND fg5.grp_id_r = '0') = 'X' THEN 'X'
+						<cfloop list="#session.thegroupofuser#" delimiters="," index="i">
+							WHEN (SELECT DISTINCT fg5.grp_permission
+							FROM #session.hostdbprefix#folders_groups fg5
+							WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+							AND fg5.folder_id_r = v.folder_id_r
+							AND fg5.grp_id_r = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#i#">) = 'R' THEN 'R'
+							WHEN (SELECT DISTINCT fg5.grp_permission
+							FROM #session.hostdbprefix#folders_groups fg5
+							WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+							AND fg5.folder_id_r = v.folder_id_r
+							AND fg5.grp_id_r = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#i#">) = 'W' THEN 'W'
+							WHEN (SELECT DISTINCT fg5.grp_permission
+							FROM #session.hostdbprefix#folders_groups fg5
+							WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+							AND fg5.folder_id_r = v.folder_id_r
+							AND fg5.grp_id_r = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#i#">) = 'X' THEN 'X'
+						</cfloop>
+						ELSE 'R'
+					END as permfolder
+				</cfif>
+			FROM #session.hostdbprefix#videos v 
+			WHERE v.in_trash = <cfqueryparam cfsqltype="cf_sql_varchar" value="T">
+		</cfquery>
+		<cfif qry_video.RecordCount>
+			<cfset myArray = arrayNew( 1 )>
+			<cfset temp= ArraySet(myArray, 1, qry_video.RecordCount, "False")>
+			<cfset QueryAddColumn(qry_video, "in_collection", "VarChar", myArray)>
+			<cfloop query="qry_video">
+				<cfquery name="alert_col" datasource="#application.razuna.datasource#">
+					SELECT file_id_r
+					FROM #session.hostdbprefix#collections_ct_files
+					WHERE file_id_r = <cfqueryparam value="#qry_video.id#" cfsqltype="CF_SQL_VARCHAR"> 
+				</cfquery>
+				<cfif alert_col.RecordCount>
+					<cfset temp = QuerySetCell(qry_video, "in_collection", "True", qry_video.currentRow  )>
+				</cfif>
+			</cfloop>
+		</cfif>
+		<cfreturn qry_video />
+</cffunction>
+
+<!--- RESTORE THE VIDEO --->
+<cffunction name="restorevideos" output="false">
+	<cfargument name="thestruct" type="struct">
+	<!--- check the parent folder is exist --->
+	<cfquery datasource="#application.razuna.datasource#" name="thedetail">
+		SELECT folder_main_id_r,folder_id_r FROM #session.hostdbprefix#folders 
+		WHERE folder_id = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.thestruct.folder_id#">
+		AND in_trash = <cfqueryparam cfsqltype="cf_sql_varchar" value="F">
+		AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+	</cfquery>
+	<cfset local = structNew()>
+	<cfif thedetail.RecordCount EQ 0>
+		<cfset local.istrash = "trash">
+	<cfelse>
+		<cfquery datasource="#application.razuna.datasource#" name="dir_parent_id">
+			SELECT folder_id,folder_id_r,in_trash FROM #session.hostdbprefix#folders 
+			WHERE folder_main_id_r = <cfqueryparam cfsqltype="cf_sql_varchar" value="#thedetail.folder_main_id_r#">
+			AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+		</cfquery>
+		<cfloop query="dir_parent_id">
+			<cfquery datasource="#application.razuna.datasource#" name="get_qry">
+				SELECT folder_id,in_trash FROM #session.hostdbprefix#folders 
+				WHERE folder_id = <cfqueryparam cfsqltype="cf_sql_varchar" value="#dir_parent_id.folder_id_r#">
+				AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+			</cfquery>
+			<cfif get_qry.in_trash EQ 'T'>
+				<cfset local.istrash = "trash">
+			<cfelseif get_qry.folder_id EQ dir_parent_id.folder_id_r AND get_qry.in_trash EQ 'F'>
+				<cfset local.root = "yes">
+					<!--- Update in_trash --->
+					<cfquery datasource="#application.razuna.datasource#">
+						UPDATE #session.hostdbprefix#videos 
+						SET in_trash=<cfqueryparam cfsqltype="cf_sql_varchar" value="F">
+						WHERE vid_id = <cfqueryparam value="#arguments.thestruct.id#" cfsqltype="CF_SQL_VARCHAR">
+						AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+					</cfquery>
+			</cfif>
+		</cfloop>
+	</cfif>
+	<!--- set is trash --->
+	<cfif isDefined('local.istrash') AND  local.istrash EQ "trash">
+		<cfset var is_trash = "intrash">
+	<cfelse>
+		<cfset var is_trash = "notrash">
+	</cfif>
+	<cfreturn is_trash />
+</cffunction>
 <!--- REMOVE MANY VIDEO --->
 <cffunction name="removevideomany" output="true">
 	<cfargument name="thestruct" type="struct">
@@ -989,8 +1146,6 @@
 		<!--- Local --->
 		<cfif application.razuna.storage EQ "local">
 			<!--- MD5 video --->
-			<cfset consoleoutput(true)>
-			<cfset console("#arguments.thestruct.assetpath#/#session.hostid#/#qryorg.path_to_asset#/#qryorg.vid_name_org#")>
 			<cfif FileExists("#arguments.thestruct.assetpath#/#session.hostid#/#qryorg.path_to_asset#/#qryorg.vid_name_org#")>
 				<cfset var md5hash = hashbinary("#arguments.thestruct.assetpath#/#session.hostid#/#qryorg.path_to_asset#/#qryorg.vid_name_org#")>
 				<!--- Update DB --->
@@ -1440,7 +1595,11 @@
 					<cfquery datasource="#application.razuna.datasource#">
 					UPDATE #session.hostdbprefix#videos
 					SET 
-					vid_group = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#arguments.thestruct.file_id#">,
+					<cfif isDefined('arguments.thestruct.vid_group_id') AND arguments.thestruct.vid_group_id NEQ ''>
+						vid_group = <cfqueryparam value="#arguments.thestruct.vid_group_id#" cfsqltype="cf_sql_varchar">,
+					<cfelse>
+						vid_group = <cfqueryparam value="#arguments.thestruct.file_id#" cfsqltype="CF_SQL_VARCHAR">, 
+					</cfif>
 					vid_filename = <cfqueryparam cfsqltype="cf_sql_varchar" value="#previewvideo#">,
 					vid_custom_id = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.thestruct.newid#">,
 					vid_owner = <cfqueryparam value="#session.theuserid#" cfsqltype="CF_SQL_VARCHAR">,
@@ -1507,10 +1666,15 @@
 	<cfinvoke component="assets" method="iswindows" returnvariable="arguments.thestruct.iswindows">
 	<!--- Put the video id into a variable --->
 	<cfset thevideoid = #arguments.thestruct.file_id#>
+	<!--- set session.artofimage value if it is empty  --->
+	<cfif session.artofimage EQ "">
+		<cfset session.artofimage = arguments.thestruct.artofimage>
+	</cfif>
 	<!--- Start the loop to get the different kinds of videos --->
 	<cfloop delimiters="," list="#session.artofimage#" index="art">
 		<!--- Since the video format could be from the related table we need to check this here so if the value is a number it is the id for the video --->
-		<cfif isnumeric(art)>
+		<!---<cfif isnumeric(art)> --->
+		<cfif art NEQ "video">
 			<!--- Set the video id for this type of format and set the extension --->
 			<cfset thevideoid = #art#>
 			<cfquery name="ext" datasource="#variables.dsn#">
@@ -1519,10 +1683,10 @@
 			WHERE vid_id = <cfqueryparam value="#thevideoid#" cfsqltype="CF_SQL_VARCHAR">
 			AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
 			</cfquery>
-			<cfset art = #ext.vid_extension#>
+			<!---<cfset art = #ext.vid_extension#>--->
 		</cfif>
-			<!--- Create subfolder for the kind of video --->
-			<cfdirectory action="create" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#/#art#" mode="775">
+		<!--- Create subfolder for the kind of video --->
+		<cfdirectory action="create" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#/#art#" mode="775">
 		<!--- Set the colname to get from oracle to video_preview else to video always --->
 		<cfif #art# EQ "video_preview">
 			<cfset thecolname = "video_preview">
@@ -1590,7 +1754,7 @@
 			</cfthread>
 		</cfif>
 		<!--- Wait for the thread above until the file is downloaded fully --->
-			<cfthread action="join" name="download#art##thevideoid#" />
+		<cfthread action="join" name="download#art##thevideoid#" />
 		<!--- Set extension --->
 		<cfif thecolname EQ "video_preview">
 			<cfset theext = "mov">
@@ -1617,7 +1781,7 @@
 	<cfset zipname = replace(arguments.thestruct.zipname,"/","-","all")>
 	<cfset zipname = replace(zipname,"\","-","all")>
 	<cfset zipname = replace(zipname, " ", "_", "All")>
-	<cfif session.createzip EQ 'no'>
+	<cfif structKeyExists(session,"createzip") AND session.createzip EQ 'no'>
 		<cfset zipname = zipname>
 	<cfelse>
 		<cfset zipname = zipname & ".zip">
@@ -1627,13 +1791,24 @@
 		<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#zipname#">
 		<cfcatch type="any"></cfcatch>
 	</cftry>
-	<cfif session.createzip EQ 'no'>
-		<!--- Delete if any folder exists in same name --->
+	<cfif structKeyExists(session,"createzip") AND session.createzip EQ 'no'>
+		<!--- Delete if any folder exists in same name and rename the temp folder--->
 		<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#zipname#")>
 			<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" recurse="true">
+			<cfdirectory action="rename" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#" newdirectory="#arguments.thestruct.thepath#/outgoing/#zipname#" mode="775">
+		<cfelse>
+			<cfdirectory action="rename" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#" newdirectory="#arguments.thestruct.thepath#/outgoing/#zipname#" mode="775">
 		</cfif>
-		<!--- Rename the temp folder --->
-		<cfdirectory action="rename" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#" newdirectory="#arguments.thestruct.thepath#/outgoing/#zipname#" mode="775">
+		<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#zipname#")>
+			<!--- get all directory name --->
+			<cfdirectory action="list" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" name="myDir" type="dir">
+			<cfloop query="myDir">
+				<!--- get all files from the directory --->
+				<cfdirectory action="list" directory="#arguments.thestruct.thepath#/outgoing/#zipname#/#myDir.name#" name="myFile" type="file">
+				<cfset new_name = replace(myFile.name, " ", "_", "All")>
+				<cffile action="rename" destination="#arguments.thestruct.thepath#/outgoing/#zipname#/#myDir.name#/#new_name#" source="#arguments.thestruct.thepath#/outgoing/#zipname#/#myDir.name#/#myFile.name#" >
+			</cfloop>
+		</cfif>
 	<cfelse>
 		<!--- Zip the folder --->
 		<cfzip action="create" ZIPFILE="#arguments.thestruct.thepath#/outgoing/#zipname#" source="#arguments.thestruct.thepath#/outgoing/#tempfolder#" recurse="true" timeout="300" />

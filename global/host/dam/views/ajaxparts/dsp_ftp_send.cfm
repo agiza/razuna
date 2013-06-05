@@ -140,11 +140,13 @@
 				</td>
 			</tr>
 		</cfif>
-		<!--- check create zip --->
+		<!--- check zip file --->
+		<cfif listLast(attributes.filename,'.') NEQ "zip">
 		<tr>
 			<td>#myFusebox.getApplicationData().defaults.trans("create_zip")#</td>
 			<td><input name="createzip" type="radio" value="no" checked="true">#myFusebox.getApplicationData().defaults.trans("no")# <input name="createzip" type="radio" value="yes">#myFusebox.getApplicationData().defaults.trans("yes")#</td>
 		</tr>
+		</cfif>
 		<tr>
 			<td valign="top">#myFusebox.getApplicationData().defaults.trans("attachment")#</td>
 			<td>
@@ -178,13 +180,17 @@
 	        	}
 	    	}
 			//Get createzip selection
-			for (var i = 0; i<document.sendftpform.elements.length; i++) {
-	        if ((document.sendftpform.elements[i].name.indexOf('createzip') > -1)) {
-	            if (document.sendftpform.elements[i].checked) {
-	                var createzip = document.sendftpform.elements[i].value;
-	            	}
-	        	}
-	    	}
+			<cfif listLast(attributes.filename,'.') NEQ "zip">
+				for (var i = 0; i<document.sendftpform.elements.length; i++) {
+		        if ((document.sendftpform.elements[i].name.indexOf('createzip') > -1)) {
+		            if (document.sendftpform.elements[i].checked) {
+		                var createzip = document.sendftpform.elements[i].value;
+		            	}
+		        	}
+		    	}
+			<cfelse>
+				var createzip = "";
+			</cfif>
 	    	// Get the checked values (file id's)
 			var artimg = '';
 			var artvid = '';

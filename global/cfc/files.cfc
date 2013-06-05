@@ -377,6 +377,179 @@
 		<cfreturn />
 	</cffunction>
 	
+	<!--- TRASH THE FILE --->
+	<cffunction name="trashfile" output="false">
+		<cfargument name="thestruct" type="struct">
+		<cfquery datasource="#application.razuna.datasource#" name="qry_file">
+			SELECT * FROM #session.hostdbprefix#files 
+			WHERE file_id =<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.thestruct.id#">
+			AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+		</cfquery>
+		<!--- Update in_trash --->
+		<cfquery datasource="#application.razuna.datasource#">
+			UPDATE #session.hostdbprefix#files SET in_trash=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.thestruct.trash#">
+			WHERE file_id = <cfqueryparam value="#arguments.thestruct.id#" cfsqltype="CF_SQL_VARCHAR">
+			AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+		</cfquery>
+	</cffunction>
+	
+	<!--- TRASH MANY FILE --->
+	<cffunction name="trashfilemany" output="true">
+		<cfargument name="thestruct" type="struct">
+		<!--- Loop --->
+		<cfloop list="#arguments.thestruct.id#" index="i" delimiters=",">
+			<cfset i = listfirst(i,"-")>
+			<!--- Update in_trash --->
+			<cfquery datasource="#application.razuna.datasource#">
+				UPDATE #session.hostdbprefix#files 
+				SET in_trash=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.thestruct.trash#">
+				WHERE file_id = <cfqueryparam value="#i#" cfsqltype="CF_SQL_VARCHAR">
+				AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#arguments.thestruct.hostid#">
+			</cfquery>
+		</cfloop>
+		<!--- Flush Cache --->
+		<cfset variables.cachetoken = resetcachetoken("files")>
+		<cfset resetcachetoken("folders")>
+		<cfset resetcachetoken("search")>
+		<cfreturn />
+	</cffunction>
+	
+	<!--- Get files from trash --->
+	<cffunction name="gettrashfile" output="false">
+		<cfargument name="thestruct" type="struct">
+			<cfquery datasource="#application.razuna.datasource#" name="qry_file">
+				SELECT f.file_id AS id, f.file_name AS filename,f.folder_id_r AS folder_id_r, f.file_extension AS ext,f.file_name_org AS filename_org,
+					'doc' AS kind,f.is_available AS is_available,f.file_create_date AS date_create,f.file_change_date AS date_change,f.link_kind AS link_kind,
+					f.link_path_url AS link_path_url,f.path_to_asset AS path_to_asset,f.cloud_url AS cloud_url,f.cloud_url_org AS cloud_url_org,f.hashtag AS hashtag 
+					<!--- Permfolder --->
+					<cfif Request.securityObj.CheckSystemAdminUser() OR Request.securityObj.CheckAdministratorUser()>
+						, 'X' as permfolder
+					<cfelse>
+						,
+						CASE
+							WHEN (SELECT DISTINCT fg5.grp_permission
+							FROM #session.hostdbprefix#folders_groups fg5
+							WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+							AND fg5.folder_id_r = f.folder_id_r
+							AND fg5.grp_id_r = '0') = 'R' THEN 'R'
+							WHEN (SELECT DISTINCT fg5.grp_permission
+							FROM #session.hostdbprefix#folders_groups fg5
+							WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+							AND fg5.folder_id_r = f.folder_id_r
+							AND fg5.grp_id_r = '0') = 'W' THEN 'W'
+							WHEN (SELECT DISTINCT fg5.grp_permission
+							FROM #session.hostdbprefix#folders_groups fg5
+							WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+							AND fg5.folder_id_r = f.folder_id_r
+							AND fg5.grp_id_r = '0') = 'X' THEN 'X'
+							<cfloop list="#session.thegroupofuser#" delimiters="," index="i">
+								WHEN (SELECT DISTINCT fg5.grp_permission
+								FROM #session.hostdbprefix#folders_groups fg5
+								WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+								AND fg5.folder_id_r = f.folder_id_r
+								AND fg5.grp_id_r = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#i#">) = 'R' THEN 'R'
+								WHEN (SELECT DISTINCT fg5.grp_permission
+								FROM #session.hostdbprefix#folders_groups fg5
+								WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+								AND fg5.folder_id_r = f.folder_id_r
+								AND fg5.grp_id_r = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#i#">) = 'W' THEN 'W'
+								WHEN (SELECT DISTINCT fg5.grp_permission
+								FROM #session.hostdbprefix#folders_groups fg5
+								WHERE fg5.host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+								AND fg5.folder_id_r = f.folder_id_r
+								AND fg5.grp_id_r = <cfqueryparam cfsqltype="CF_SQL_VARCHAR" value="#i#">) = 'X' THEN 'X'
+							</cfloop>
+							ELSE 'R'
+						END as permfolder
+					</cfif>
+				FROM 
+					#session.hostdbprefix#files f 
+				WHERE 
+					f.in_trash = <cfqueryparam cfsqltype="cf_sql_varchar" value="T">
+			</cfquery>
+			<cfif qry_file.RecordCount>
+				<cfset myArray = arrayNew( 1 )>
+				<cfset temp= ArraySet(myArray, 1, qry_file.RecordCount, "False")>
+				<cfset QueryAddColumn(qry_file, "in_collection", "VarChar", myArray)>
+				<cfloop query="qry_file">
+					<cfquery name="alert_col" datasource="#application.razuna.datasource#">
+						SELECT file_id_r
+						FROM #session.hostdbprefix#collections_ct_files
+						WHERE file_id_r = <cfqueryparam value="#qry_file.id#" cfsqltype="CF_SQL_VARCHAR"> 
+					</cfquery>
+					<cfif alert_col.RecordCount>
+						<cfset temp = QuerySetCell(qry_file, "in_collection", "True", qry_file.currentRow  )>
+					</cfif>
+				</cfloop>
+			</cfif>
+			<cfreturn qry_file />
+	</cffunction>
+	<!--- Get trash files form trash directory --->
+	<cffunction name="thetrashfiles" output="false">
+		<cfargument name="thestruct" type="struct">
+		<cfif directoryExists('#arguments.thestruct.thepathup#global/host/#arguments.thestruct.thetrash#/#session.hostid#/file/')>
+			<cfdirectory action="list" directory="#arguments.thestruct.thepathup#global/host/#arguments.thestruct.thetrash#/#session.hostid#/file/" name="getfilestrash">
+		<cfelse>
+			<cfdirectory action="create" directory="#arguments.thestruct.thepathup#global/host/#arguments.thestruct.thetrash#/#session.hostid#/file/">
+			<cfdirectory action="list" directory="#arguments.thestruct.thepathup#global/host/#arguments.thestruct.thetrash#/#session.hostid#/file/" name="getfilestrash">	
+		</cfif>
+		
+		<cfreturn getfilestrash />
+	</cffunction>
+	
+	<!--- RESTORE THE FILE --->
+	<cffunction name="restorefile" output="false">
+		<cfargument name="thestruct" type="struct">
+	<!--- check the parent folder is exist --->
+	<cfquery datasource="#application.razuna.datasource#" name="thedetail">
+		SELECT folder_main_id_r,folder_id_r FROM #session.hostdbprefix#folders 
+		WHERE folder_id = <cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.thestruct.folder_id#">
+		AND in_trash = <cfqueryparam cfsqltype="cf_sql_varchar" value="F">
+		AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+	</cfquery>
+	<cfset local = structNew()>
+	<cfif thedetail.RecordCount EQ 0>
+		<cfset local.istrash = "trash">
+	<cfelse>
+		<!---<cfquery datasource="#application.razuna.datasource#" name="theparentdetail">
+			SELECT folder_id,folder_id_r,in_trash FROM #session.hostdbprefix#folders 
+			WHERE folder_main_id_r = <cfqueryparam cfsqltype="cf_sql_varchar" value="#thedetail.folder_main_id_r#">
+			AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+		</cfquery>--->
+		<cfquery datasource="#application.razuna.datasource#" name="dir_parent_id">
+			SELECT folder_id,folder_id_r,in_trash FROM #session.hostdbprefix#folders 
+			WHERE folder_main_id_r = <cfqueryparam cfsqltype="cf_sql_varchar" value="#thedetail.folder_main_id_r#">
+			AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+		</cfquery>
+		<cfloop query="dir_parent_id">
+			<cfquery datasource="#application.razuna.datasource#" name="get_qry">
+				SELECT folder_id,in_trash FROM #session.hostdbprefix#folders 
+				WHERE folder_id = <cfqueryparam cfsqltype="cf_sql_varchar" value="#dir_parent_id.folder_id_r#">
+				AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+			</cfquery>
+			<cfif get_qry.in_trash EQ 'T'>
+				<cfset local.istrash = "trash">
+			<cfelseif get_qry.folder_id EQ dir_parent_id.folder_id_r AND get_qry.in_trash EQ 'F'>
+				<cfset local.root = "yes">
+				<!--- Update in_trash --->
+				<cfquery datasource="#application.razuna.datasource#">
+					UPDATE #session.hostdbprefix#files 
+					SET in_trash=<cfqueryparam cfsqltype="cf_sql_varchar" value="#arguments.thestruct.trash#">
+					WHERE file_id = <cfqueryparam value="#arguments.thestruct.id#" cfsqltype="CF_SQL_VARCHAR">
+					AND host_id = <cfqueryparam cfsqltype="cf_sql_numeric" value="#session.hostid#">
+				</cfquery>
+			</cfif>
+		</cfloop>
+	</cfif>
+	
+	<cfif isDefined('local.istrash') AND  local.istrash EQ "trash">
+		<cfset var is_trash = "intrash">
+	<cfelse>
+		<cfset var is_trash = "notrash">
+	</cfif>
+	<cfreturn is_trash />
+	</cffunction>
+	
 	<!--- REMOVE MANY FILES --->
 	<cffunction name="removefilemany" output="true">
 		<cfargument name="thestruct" type="struct">
@@ -918,27 +1091,40 @@
 				<cffile action="copy" source="#attributes.intstruct.getbin.link_path_url#" destination="#attributes.intstruct.thepath#/outgoing/#attributes.intstruct.newname#" mode="775">
 			</cfthread>
 		</cfif>
+		<!--- Check that the zip name contains no spaces --->
+		<cfset zipname = replace(arguments.thestruct.zipname,"/","-","all")>
+		<cfset zipname = replace(zipname,"\","-","all")>
+		<cfset zipname = replace(zipname, " ", "_", "All")>
 		<!--- Wait for the thread above until the file is downloaded fully --->
 		<cfthread action="join" name="download#arguments.thestruct.file_id#" />
 		<!--- Remove any file with the same name in this directory. Wrap in a cftry so if the file does not exist we don't have a error --->
-		<cftry>
+		<!---<cftry>
 			<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#newnamenoext#.zip">
 			<cfcatch type="any"></cfcatch>
-		</cftry>
-		<cfif session.createzip EQ 'no'>
-			<!--- Delete if any folder exists in same name --->
-			<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#")>
-				<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#" recurse="true">
+		</cftry>--->
+		<cfif structKeyExists(session,"createzip") AND session.createzip EQ 'no'>
+			<!--- Delete if any folder exists in same name and create the new directory --->
+			<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#zipname#")>
+				<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" recurse="true">
+				<cfdirectory action="create" directory="#arguments.thestruct.thepath#/outgoing/#zipname#">
+				<cffile action="move" destination="#arguments.thestruct.thepath#/outgoing/#zipname#" source="#arguments.thestruct.thepath#/outgoing/#newname#" >
+			<cfelse>
+				<cfdirectory action="create" directory="#arguments.thestruct.thepath#/outgoing/#zipname#">
+				<cffile action="move" destination="#arguments.thestruct.thepath#/outgoing/#zipname#" source="#arguments.thestruct.thepath#/outgoing/#newname#" >
 			</cfif>
-			<cfdirectory action="create" directory="#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#">
-			<cffile action="move" destination="#arguments.thestruct.thepath#/outgoing/#arguments.thestruct.zipname#" source="#arguments.thestruct.thepath#/outgoing/#newname#" >
 		<cfelse>
-			<!--- Zip the file --->	
-			<cfzip action="create" ZIPFILE="#arguments.thestruct.thepath#/outgoing/#newnamenoext#.zip" source="#arguments.thestruct.thepath#/outgoing/#newname#" recurse="true" timeout="300" />
-			<!--- Remove the file --->
-			<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#newname#">
+			<cfif listLast(arguments.thestruct.newname,'.') NEQ "zip">
+				<!--- Zip the file --->	
+				<cfzip action="create" ZIPFILE="#arguments.thestruct.thepath#/outgoing/#newnamenoext#.zip" source="#arguments.thestruct.thepath#/outgoing/#newname#" recurse="true" timeout="300" />
+				<!--- Remove the file --->
+				<cffile action="delete" file="#arguments.thestruct.thepath#/outgoing/#newname#">
+			</cfif>
 		</cfif>
-		<cfset newname="#newnamenoext#.zip">
+		<cfif structKeyExists(session,"createzip") AND session.createzip EQ 'no'>
+			<cfset newname="#newnamenoext#">
+		<cfelse>
+			<cfset newname="#newnamenoext#.zip">
+		</cfif>
 		<!--- Return --->
 		<cfreturn newname>
 	</cffunction>

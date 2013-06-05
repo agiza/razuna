@@ -3059,7 +3059,7 @@
 		<set name="attributes.folderpath" value="" overwrite="false" />
 		<set name="attributes.artofimage" value="" overwrite="false" />
 		<set name="attributes.createzip" value="" overwrite="false" />
-		<!-- Store values in session since we need them later on some more -->
+		<!--Store values in session since we need them later on some more-->
 		<set name="session.ftp_server" value="#attributes.ftp_server#" />
 		<set name="session.ftp_user" value="#attributes.ftp_user#" />
 		<set name="session.ftp_pass" value="#attributes.ftp_pass#" />
