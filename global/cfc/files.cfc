@@ -1106,12 +1106,9 @@
 			<!--- Delete if any folder exists in same name and create the new directory --->
 			<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#zipname#")>
 				<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" recurse="true">
-				<cfdirectory action="create" directory="#arguments.thestruct.thepath#/outgoing/#zipname#">
-				<cffile action="move" destination="#arguments.thestruct.thepath#/outgoing/#zipname#" source="#arguments.thestruct.thepath#/outgoing/#newname#" >
-			<cfelse>
-				<cfdirectory action="create" directory="#arguments.thestruct.thepath#/outgoing/#zipname#">
-				<cffile action="move" destination="#arguments.thestruct.thepath#/outgoing/#zipname#" source="#arguments.thestruct.thepath#/outgoing/#newname#" >
 			</cfif>
+			<cfdirectory action="create" directory="#arguments.thestruct.thepath#/outgoing/#zipname#">
+			<cffile action="move" destination="#arguments.thestruct.thepath#/outgoing/#zipname#" source="#arguments.thestruct.thepath#/outgoing/#newname#" >
 		<cfelse>
 			<cfif listLast(arguments.thestruct.newname,'.') NEQ "zip">
 				<!--- Zip the file --->	

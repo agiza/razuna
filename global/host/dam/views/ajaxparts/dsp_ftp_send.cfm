@@ -179,7 +179,7 @@
 	            	}
 	        	}
 	    	}
-			//Get createzip selection
+			//Get createzip selection and check the file ext
 			<cfif listLast(attributes.filename,'.') NEQ "zip">
 				for (var i = 0; i<document.sendftpform.elements.length; i++) {
 		        if ((document.sendftpform.elements[i].name.indexOf('createzip') > -1)) {
@@ -189,6 +189,7 @@
 		        	}
 		    	}
 			<cfelse>
+			// Set defult value
 				var createzip = "";
 			</cfif>
 	    	// Get the checked values (file id's)

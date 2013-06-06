@@ -1449,16 +1449,15 @@
 		<!--- Delete if any folder exists in same name and rename the temp folder --->
 		<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#zipname#")>
 			<cfdirectory action="delete" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" recurse="true">
-			<cfdirectory action="rename" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#" newdirectory="#arguments.thestruct.thepath#/outgoing/#zipname#" mode="775">
-		<cfelse>
-			<cfdirectory action="rename" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#" newdirectory="#arguments.thestruct.thepath#/outgoing/#zipname#" mode="775">
 		</cfif>
+			<cfdirectory action="rename" directory="#arguments.thestruct.thepath#/outgoing/#tempfolder#" newdirectory="#arguments.thestruct.thepath#/outgoing/#zipname#" mode="775">
 		<cfif directoryExists("#arguments.thestruct.thepath#/outgoing/#zipname#")>
 			<!--- get all directory name --->
 			<cfdirectory action="list" directory="#arguments.thestruct.thepath#/outgoing/#zipname#" name="myDir" type="dir">
 			<cfloop query="myDir">
 				<!--- get all files from the directory --->
 				<cfdirectory action="list" directory="#arguments.thestruct.thepath#/outgoing/#zipname#/#myDir.name#" name="myFile" type="file">
+				<!--- Rename the files --->
 				<cfset new_name = replace(myFile.name, " ", "_", "All")>
 				<cffile action="rename" destination="#arguments.thestruct.thepath#/outgoing/#zipname#/#myDir.name#/#new_name#" source="#arguments.thestruct.thepath#/outgoing/#zipname#/#myDir.name#/#myFile.name#" >
 			</cfloop>
