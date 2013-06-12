@@ -1322,6 +1322,7 @@
 	<cfset application.razuna.api.awskeysecret = qry.conf_aws_secret_access_key>
 	<cfset application.razuna.api.awslocation = qry.conf_aws_location>
 	<cfset application.razuna.api.rfs = qry.conf_rendering_farm>
+	<cfset application.razuna.rfs =  qry.conf_rendering_farm>
 	<cfset application.razuna.api.isp = qry.conf_isp>
 	<cfset application.razuna.api.akatoken = qry.conf_aka_token>
 </cffunction>

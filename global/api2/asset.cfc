@@ -915,5 +915,54 @@
 		<!--- Return --->
 		<cfreturn thexml>
 	</cffunction>
+	
+	<!--- Convert assets to other formats --->
+	<cffunction name="createrenditions" access="remote" output="false">
+		<cfargument name="api_key" type="string" required="true" >
+		<cfargument name="file_id" type="string" required="true">
+		<cfargument name="assettype" type="string" required="true" >
+		<cfargument name="convert_to" type="string" required="true" >
+		<!--- Param --->
+		<cfparam name="arguments.height" default="0">
+		<cfparam name="arguments.width" default="0">
+		<cfparam name="arguments.dpi" default="">
+		<cfparam name="arguments.wm" default="">
+		<cfparam name="arguments.bitrate" default="0">
+		<cfparam name="arguments.link_kind" default="">
+		<!--- Loop to set Height,width,dpi,wm & bitrate --->
+		<cfoutput>
+        	<cfloop list="#arguments.convert_to#" index="format">
+				<cfset arguments.convert_height = #arguments.height#>
+				<cfset arguments.convert_width = #arguments.width#>
+				<cfset arguments.convert_dpi = #arguments.dpi#>
+				<cfset arguments.convert_wm = #arguments.wm#>
+				<cfset arguments.convert_bitrate = #arguments.bitrate#>
+			</cfloop>
+        </cfoutput>
+        <!--- Check api key --->
+		<cfset var thesession = checkdb(arguments.api_key)>
+		<!--- Check to see if session is valid --->
+		<cfif thesession>
+			<cfset arguments.assetpath = expandPath("../../assets")>
+			<cfset arguments.thepath = expandPath("../../#application.razuna.api.host_path#/dam")>
+			<!--- Check the assettype --->
+			<cfif arguments.assettype EQ "img">
+				<!--- Get image settings --->
+				<cfinvoke component="global.cfc.settings" method="prefs_image" thestruct="#arguments#" returnvariable="arguments.qry_settings_image" />
+				<!--- Convert images --->
+				<cfinvoke component="global.cfc.images" method="convertimage" thestruct="#arguments#" />
+			<cfelseif arguments.assettype EQ "aud">
+				<!--- Get audio settings --->
+				<cfinvoke component="global.cfc.settings" method="prefs_video" thestruct="#arguments#" returnvariable="arguments.qry_settings_audio" />
+				<!--- Convert audios --->
+				<cfinvoke component="global.cfc.audios" method="convertaudio" thestruct="#arguments#" />
+			<cfelseif arguments.assettype EQ "vid">
+				<!--- Get video settings --->
+				<cfinvoke component="global.cfc.settings" method="prefs_video" thestruct="#arguments#" returnvariable="arguments.qry_settings_video" />
+				<!--- Convert videos --->
+				<cfinvoke component="global.cfc.videos" method="convertvideothread" thestruct="#arguments#" />
+			</cfif>
+		</cfif>
+	</cffunction>
     
 </cfcomponent>

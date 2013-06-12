@@ -1080,15 +1080,27 @@
 				<cfinvoke component="global" method="getWMtemplatedetail" wm_temp_id="#qry_wm.upl_temp_value#" returnvariable="thewm" />
 			</cfif>
 		<cfelse>
-			<!--- Set image width and height --->
-			<cfset var newImgWidth  = evaluate("convert_width_#theformat#")>
-			<cfset var newImgHeight = evaluate("convert_height_#theformat#")>
-			<cfset var thedpi = evaluate("convert_dpi_#theformat#")>
-			<!--- If there is a watermark being selected grab it here --->
-			<cfif "convert_wm_#theformat#" NEQ "">
-				<cfset var wmid = evaluate("convert_wm_#theformat#")>
-				<cfinvoke component="global" method="getWMtemplatedetail" wm_temp_id="#wmid#" returnvariable="thewm" />
-			</cfif>
+			<!--- Set image width,height and dpi from API --->
+			<cfif StructKeyExists(arguments.thestruct,"api_key") AND arguments.thestruct.api_key NEQ "">
+				<cfset var newImgWidth  = arguments.thestruct.width>
+				<cfset var newImgHeight = arguments.thestruct.height>
+				<cfset var thedpi = arguments.thestruct.dpi>
+				<!--- If there is a watermark being selected grab it here --->
+				<cfif arguments.thestruct.convert_wm NEQ "">
+					<cfset var wmid = arguments.thestruct.convert_wm >
+					<cfinvoke component="global" method="getWMtemplatedetail" wm_temp_id="#wmid#" returnvariable="thewm" />
+				</cfif>	
+			<cfelse>
+				<!--- Set image width,height --->
+				<cfset var newImgWidth  = evaluate("convert_width_#theformat#")>
+				<cfset var newImgHeight = evaluate("convert_height_#theformat#")>
+				<cfset var thedpi = evaluate("convert_dpi_#theformat#")>
+				<!--- If there is a watermark being selected grab it here --->
+				<cfif "convert_wm_#theformat#" NEQ "">
+					<cfset var wmid = evaluate("convert_wm_#theformat#")>
+					<cfinvoke component="global" method="getWMtemplatedetail" wm_temp_id="#wmid#" returnvariable="thewm" />
+				</cfif>	
+			</cfif>	
 		</cfif>
 		<!--- From here on we need to remove the number of the format (if any) --->
 		<cfset var theformat = listfirst(theformat,"_")>

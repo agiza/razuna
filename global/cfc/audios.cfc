@@ -1145,7 +1145,12 @@
 				<!--- Set image width and height --->
 				<cfset var thebitrate  = qry_b.upl_temp_value>
 			<cfelse>
-				<cfset var thebitrate = Evaluate("arguments.thestruct.convert_bitrate_#theformat#")>
+				<!--- Set Audios Bitrate --->
+				<cfif StructKeyExists(arguments.thestruct,"api_key") AND arguments.thestruct.api_key NEQ "">
+					<cfset var thebitrate = Evaluate("arguments.thestruct.bitrate")>
+				<cfelse>
+					<cfset var thebitrate = Evaluate("arguments.thestruct.convert_bitrate_#theformat#")>
+				</cfif>
 			</cfif>
 			<!--- From here on we need to remove the number of the format (if any) --->
 			<cfset var theformat = listfirst(theformat,"_")>

@@ -1407,8 +1407,15 @@
 			<cfelse>		
 				<!--- <cfset thebitrate = Evaluate("arguments.thestruct.convert_bitrate_#theformat#")>
 				<cfif thebitrate EQ ""><cfset thebitrate = "600"></cfif> --->
-				<cfset var thewidth = Evaluate("arguments.thestruct.convert_width_#theformat#")>
-				<cfset var theheight = Evaluate("arguments.thestruct.convert_height_#theformat#")>
+				<!--- Set Videos Width & Height through the API --->
+				<cfif StructKeyExists(arguments.thestruct,"api_key") AND arguments.thestruct.api_key NEQ "">
+					<cfset var thewidth = Evaluate("arguments.thestruct.width")>
+					<cfset var theheight = Evaluate("arguments.thestruct.height")>
+				<cfelse>
+					<!--- Set videos width and height --->
+					<cfset var thewidth = Evaluate("arguments.thestruct.convert_width_#theformat#")>
+					<cfset var theheight = Evaluate("arguments.thestruct.convert_height_#theformat#")>
+				</cfif>
 			</cfif>
 			<!--- From here on we need to remove the number of the format (if any) --->
 			<cfset var theformat = listfirst(theformat,"_")>
