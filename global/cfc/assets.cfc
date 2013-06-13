@@ -4075,9 +4075,9 @@ This is the main function called directly by a single upload else from addassets
 				<cfif arguments.thestruct.qryfile.link_kind NEQ "lan">
 					<cfthread name="#upa#" audstruct="#arguments.thestruct#">
 						<cfinvoke component="amazon" method="Upload">
-							<cfinvokeargument name="key" value="/#arguments.thestruct.qryfile.folder_id#/aud/#arguments.thestruct.newid#/#arguments.thestruct.qryfile.filename#">
-							<cfinvokeargument name="theasset" value="#arguments.thestruct.theorgfile#">
-							<cfinvokeargument name="awsbucket" value="#arguments.thestruct.awsbucket#">
+							<cfinvokeargument name="key" value="/#attributes.audstruct.qryfile.folder_id#/aud/#attributes.audstruct.newid#/#attributes.audstruct.qryfile.filename#">
+							<cfinvokeargument name="theasset" value="#attributes.audstruct.theorgfile#">
+							<cfinvokeargument name="awsbucket" value="#attributes.audstruct.awsbucket#">
 						</cfinvoke>
 					</cfthread>
 					<cfthread action="join" name="#upa#" />

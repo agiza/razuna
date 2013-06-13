@@ -114,7 +114,7 @@
 	<cfif attributes.iscol EQ "F">
 		loadcontent('content','#myself##xfa.fcontent#&folder_id=#attributes.folder_id#&iscol=#attributes.iscol#');
 	<cfelse>
-		loadcontent('content<cfif structKeyExists(attributes,"released") AND attributes.released>rel</cfif>','#myself##xfa.collectionslist#&folder_id=#attributes.folder_id#&kind=content&iscol=#attributes.iscol#&released=#attributes.released#');
+		loadcontent('content<cfif structKeyExists(attributes,"released") AND attributes.released>rel</cfif>','#myself##xfa.collectionslist#&folder_id=#attributes.folder_id#&kind=content&iscol=#attributes.iscol#<cfif structKeyExists(attributes,"released") AND attributes.released>&released=#attributes.released#</cfif>');
 		<cfif structKeyExists(attributes,"released") AND attributes.released>
 			$('##tabsfolder_tab').tabs('select','##contentrel');
 		</cfif>
